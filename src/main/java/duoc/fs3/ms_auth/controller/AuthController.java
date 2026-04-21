@@ -1,6 +1,6 @@
 package duoc.fs3.ms_auth.controller;
 
-import duoc.fs3.ms_auth.dto.RegisterRequest;
+import duoc.fs3.ms_auth.dto.*;
 import duoc.fs3.ms_auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,5 +17,16 @@ public class AuthController {
     public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
         authService.register(request);
         return ResponseEntity.ok("User registered successfully");
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        String token = authService.login(request);
+        return ResponseEntity.ok(new AuthResponse(token));
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("Acceso permitido");
     }
 }
