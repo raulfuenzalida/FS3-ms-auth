@@ -183,14 +183,6 @@ El microservicio sigue una arquitectura limpia con separación clara de responsa
 - **Repository**: Acceso a datos con Spring Data JPA
 - **Security**: Configuración de seguridad y gestión JWT
 
-### Configuración JWT
-La clave JWT es fija y configurable para garantizar consistencia entre instancias:
-
-```properties
-# Clave secreta fija para firmar tokens JWT (Base64 encoded)
-jwt.secret=bXlZGVmYXVsdEtleXRrZXNLXRlc3JldGlvbkVzZXJjZXRTZWNyZXRLZXk5b25zSGFzaTI1NkFsZ29yaXRobA==
-```
-
 ### Ventajas de la Arquitectura
 - **Escalabilidad**: Clave JWT fija para Docker y entornos en la nube
 - **Mantenibilidad**: Lógica centralizada facilita cambios futuros
