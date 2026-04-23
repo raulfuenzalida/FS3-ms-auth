@@ -1,61 +1,80 @@
 package duoc.fs3.ms_auth.security;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
+import java.util.Base64;
 import java.util.Date;
 
+/**
+ * Servicio para la gestión de tokens JWT.
+ * 
+ * Esta clase proporciona métodos para generar, validar y extraer información
+ * de tokens JSON Web Token (JWT). Utiliza una clave secreta fija
+ * configurada desde application.properties para garantizar consistencia
+ * en entornos escalados como Docker.
+ * 
+ * @author Duoc UC Fullstack III
+ * @version 1.0
+ * @since 2026
+ */
 @Service
 public class JwtService {
 
-    // Clave en BASE64 
-    private final String SECRET_KEY = "bXktc3VwZXItc2VjcmV0LWtleS1mb3ItbXZwLXByb2plY3QtMTIzNDU2Nzg5MA==";
+    // Constantes para configuración JWT
+    private static final String DEFAULT_SECRET = "myDefaultSecretKeyThatMustBeAtLeast256BitsLongForHS256Algorithm";
+    private static final long TOKEN_VALIDITY_MS = 3600000; // 1 hora en milisegundos
 
-    // 1 día de duración
-    private final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
+    /**
+     * Clave secreta utilizada para firmar los tokens JWT.
+     * Se obtiene desde application.properties para garantizar
+     * que sea la misma en todas las instancias.
+     */
+    @Value("${jwt.secret:" + DEFAULT_SECRET + "}")
+    private String jwtSecret;
 
-    // Generar clave segura
-    private Key getSignKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
+    /**
+     * Genera un token JWT para el usuario especificado.
+     * 
+     * @param username Nombre de usuario para el cual se genera el token
+     * @return Token JWT con validez de 1 hora
+     */
+    public String generateToken(String username) {
 
-    // Generar token
-    public String generateToken(String email) {
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(getSignKey(), SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_MS))
+                .signWith(getSigningKey())
                 .compact();
     }
 
-    // Extraer email del token
+    /**
+     * Extrae el nombre de usuario de un token JWT.
+     * 
+     * @param token Token JWT del cual se extrae el username
+     * @return Nombre de usuario contenido en el token
+     * @throws io.jsonwebtoken.JwtException Si el token es inválido
+     */
     public String extractUsername(String token) {
-        return extractAllClaims(token).getSubject();
-    }
-
-    // Validar token
-    public boolean isTokenValid(String token) {
-        try {
-            extractAllClaims(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    // Extraer claims
-    private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
+                .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
-                .getBody();
+                .getBody()
+                .getSubject();
+    }
+
+    /**
+     * Obtiene la clave secreta utilizada para firmar tokens.
+     * 
+     * @return Clave secreta para firmar tokens JWT
+     */
+    public SecretKey getSigningKey() {
+        byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
