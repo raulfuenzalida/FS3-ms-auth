@@ -40,15 +40,17 @@ public class JwtService {
      * Genera un token JWT para el usuario especificado.
      * 
      * @param username Nombre de usuario para el cual se genera el token
-     * @return Token JWT con validez de 1 hora
+     * @return Token JWT con validez de 1 hora y headers compatibles con JWT debugger
      */
     public String generateToken(String username) {
 
         return Jwts.builder()
+                .setHeaderParam("typ", "JWT")
+                .setHeaderParam("alg", "HS256")
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_MS))
-                .signWith(getSigningKey())
+                .signWith(getSigningKey(), io.jsonwebtoken.SignatureAlgorithm.HS256)
                 .compact();
     }
 

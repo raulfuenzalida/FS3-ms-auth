@@ -3,6 +3,7 @@ package duoc.fs3.ms_auth.controller;
 import duoc.fs3.ms_auth.dto.request.LoginRequest;
 import duoc.fs3.ms_auth.dto.request.RegisterRequest;
 import duoc.fs3.ms_auth.dto.response.LoginResponse;
+import duoc.fs3.ms_auth.dto.response.RegisterResponse;
 import duoc.fs3.ms_auth.exception.InvalidCredentialsException;
 import duoc.fs3.ms_auth.exception.UserAlreadyExistsException;
 import duoc.fs3.ms_auth.service.AuthService;
@@ -46,7 +47,7 @@ public class AuthController {
      * Registra un nuevo usuario en el sistema.
      * 
      * @param request Datos de registro del usuario
-     * @return Mensaje de confirmación del registro
+     * @return RegisterResponse con información del usuario registrado
      */
     @PostMapping("/register")
     @Operation(summary = "Registrar usuario", description = "Registra un nuevo usuario en el sistema")
@@ -55,14 +56,15 @@ public class AuthController {
         @ApiResponse(responseCode = "400", description = "Datos de inválidos o usuario ya existe"),
         @ApiResponse(responseCode = "422", description = "Error de validación en los datos de entrada")
     })
-    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         
         try {
-            String result = authService.registerUser(request);
+            RegisterResponse result = authService.registerUser(request);
             return ResponseEntity.ok(result);
             
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new RegisterResponse(e.getMessage(), false));
         }
     }
 

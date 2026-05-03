@@ -3,6 +3,8 @@ package duoc.fs3.ms_auth.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import duoc.fs3.ms_auth.dto.request.LoginRequest;
 import duoc.fs3.ms_auth.dto.request.RegisterRequest;
+import duoc.fs3.ms_auth.dto.response.LoginResponse;
+import duoc.fs3.ms_auth.dto.response.RegisterResponse;
 import duoc.fs3.ms_auth.model.User;
 import duoc.fs3.ms_auth.repository.UserRepository;
 import duoc.fs3.ms_auth.security.JwtService;
@@ -93,7 +95,11 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Usuario registrado correctamente"));
+                .andExpect(jsonPath("$.message").value("Usuario registrado correctamente"))
+                .andExpect(jsonPath("$.username").value("testuser"))
+                .andExpect(jsonPath("$.email").value("test@example.com"))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         verify(userRepository).save(any(User.class));
     }
@@ -118,7 +124,9 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("El nombre de usuario ya está en uso"));
+                .andExpect(jsonPath("$.message").value("El nombre de usuario ya está en uso"))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     /**
@@ -142,7 +150,9 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("El correo electrónico ya está en uso"));
+                .andExpect(jsonPath("$.message").value("El correo electrónico ya está en uso"))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     /**

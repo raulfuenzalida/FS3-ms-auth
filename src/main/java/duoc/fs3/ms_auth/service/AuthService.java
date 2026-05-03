@@ -3,6 +3,7 @@ package duoc.fs3.ms_auth.service;
 import duoc.fs3.ms_auth.dto.request.LoginRequest;
 import duoc.fs3.ms_auth.dto.request.RegisterRequest;
 import duoc.fs3.ms_auth.dto.response.LoginResponse;
+import duoc.fs3.ms_auth.dto.response.RegisterResponse;
 import duoc.fs3.ms_auth.exception.InvalidCredentialsException;
 import duoc.fs3.ms_auth.exception.UserAlreadyExistsException;
 import duoc.fs3.ms_auth.model.User;
@@ -63,11 +64,11 @@ public class AuthService {
      * Registra un nuevo usuario en el sistema.
      * 
      * @param request Datos de registro del usuario
-     * @return Mensaje de confirmación del registro
+     * @return RegisterResponse con información del usuario registrado
      * @throws UserAlreadyExistsException Si el usuario ya existe
      */
     @Transactional
-    public String registerUser(RegisterRequest request) {
+    public RegisterResponse registerUser(RegisterRequest request) {
         
         logger.info("Intento de registro de usuario: {}", request.getUsername());
         
@@ -94,7 +95,7 @@ public class AuthService {
         userRepository.save(user);
         
         logger.info("Usuario registrado exitosamente: {}", user.getUsername());
-        return "Usuario registrado correctamente";
+        return new RegisterResponse(user.getUsername(), user.getEmail());
     }
 
     /**
