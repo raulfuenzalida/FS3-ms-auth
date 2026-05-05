@@ -1,5 +1,6 @@
 package duoc.fs3.ms_auth.dto.response;
 
+import duoc.fs3.ms_auth.service.MessageService;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -56,6 +57,21 @@ public class RegisterResponse {
         this.username = username;
         this.email = email;
         this.message = "Usuario registrado correctamente";
+        this.success = true;
+        this.timestamp = LocalDateTime.now();
+    }
+
+    /**
+     * Constructor que usa MessageService para obtener mensaje personalizado.
+     * 
+     * @param username Nombre de usuario registrado
+     * @param email Correo electrónico registrado
+     * @param messageService Servicio para obtener mensaje de éxito
+     */
+    public RegisterResponse(String username, String email, MessageService messageService) {
+        this.username = username;
+        this.email = email;
+        this.message = messageService.getMessage("success.user.registered");
         this.success = true;
         this.timestamp = LocalDateTime.now();
     }

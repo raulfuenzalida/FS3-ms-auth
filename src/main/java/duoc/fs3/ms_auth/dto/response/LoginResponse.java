@@ -1,5 +1,6 @@
 package duoc.fs3.ms_auth.dto.response;
 
+import duoc.fs3.ms_auth.service.MessageService;
 import lombok.*;
 
 /**
@@ -41,5 +42,17 @@ public class LoginResponse {
         this.token = token;
         this.tokenType = "Bearer";
         this.message = "Inicio de sesión exitoso";
+    }
+
+    /**
+     * Constructor que usa MessageService para obtener mensaje personalizado.
+     * 
+     * @param token Token JWT generado
+     * @param messageService Servicio para obtener mensaje de éxito
+     */
+    public LoginResponse(String token, MessageService messageService) {
+        this.token = token;
+        this.tokenType = "Bearer";
+        this.message = messageService.getMessage("success.login");
     }
 }

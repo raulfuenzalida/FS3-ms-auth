@@ -40,6 +40,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final MessageService messageService;
 
     /**
      * Constructor que inyecta las dependencias necesarias.
@@ -52,12 +53,14 @@ public class AuthService {
     public AuthService(UserRepository userRepository,
                    PasswordEncoder passwordEncoder,
                    AuthenticationManager authenticationManager,
-                   JwtService jwtService) {
+                   JwtService jwtService,
+                   MessageService messageService) {
         
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.messageService = messageService;
     }
 
     /**
@@ -75,12 +78,12 @@ public class AuthService {
         // Verificar si el usuario ya existe
         if (userRepository.existsByUsername(request.getUsername())) {
             logger.warn("Intento de registro con username ya existente: {}", request.getUsername());
-            throw new UserAlreadyExistsException("El nombre de usuario ya está en uso");
+            throw new UserAlreadyExistsException(messageService.getMessage("error.user.exists"));
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
             logger.warn("Intento de registro con email ya existente: {}", request.getEmail());
-            throw new UserAlreadyExistsException("El correo electrónico ya está en uso");
+            throw new UserAlreadyExistsException(messageService.getMessage("error.email.exists"));
         }
 
         User user = User.builder()
@@ -95,7 +98,7 @@ public class AuthService {
         userRepository.save(user);
         
         logger.info("Usuario registrado exitosamente: {}", user.getUsername());
-        return new RegisterResponse(user.getUsername(), user.getEmail());
+        return new RegisterResponse(user.getUsername(), user.getEmail(), messageService);
     }
 
     /**
@@ -118,11 +121,11 @@ public class AuthService {
             String token = jwtService.generateToken(request.getUsernameOrEmail());
             
             logger.info("Login exitoso para usuario: {}", request.getUsernameOrEmail());
-            return new LoginResponse(token);
+            return new LoginResponse(token, messageService);
 
         } catch (AuthenticationException e) {
             logger.warn("Login fallido para usuario: {} - {}", request.getUsernameOrEmail(), e.getMessage());
-            throw new InvalidCredentialsException("Credenciales inválidas");
+            throw new InvalidCredentialsException(messageService.getMessage("error.credentials.invalid"));
         }
     }
 }
