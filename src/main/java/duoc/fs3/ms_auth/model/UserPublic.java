@@ -44,4 +44,9 @@ public class UserPublic {
      * Fecha y hora de creación del usuario.
      */
     private String createdAt;
+
+    /**
+     * Rol del usuario en el sistema.
+     */
+    private UserRole role;
 }

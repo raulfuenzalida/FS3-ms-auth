@@ -6,6 +6,7 @@ Microservicio de autenticación de usuarios desarrollado con Spring Boot 3.5.13,
 
 - **Registro de usuarios**: Creación de nuevas cuentas con validación de datos
 - **Autenticación JWT**: Inicio de sesión con generación de tokens JSON Web Token
+- **Gestión de roles**: Sistema de roles USER y ADMIN con control de acceso
 - **Validación de contraseñas**: Políticas de seguridad configurables para contraseñas
 - **Arquitectura limpia**: Separación de responsabilidades con AuthService
 - **Clave JWT fija**: Configurable para escalabilidad en Docker/AWS
@@ -48,6 +49,11 @@ Microservicio de autenticación de usuarios desarrollado con Spring Boot 3.5.13,
    ```
 
 2. La aplicación se conectará automáticamente a `localhost:3306/auth_db` con el usuario `root` y sin contraseña (configuración por defecto de Laragon).
+
+3. Si ya existen usuarios en la base de datos, ejecuta el siguiente SQL para asignarles el rol por defecto:
+   ```sql
+   UPDATE users SET role = 'USER' WHERE role IS NULL;
+   ```
 
 ## Ejecución de la Aplicación
 
@@ -99,7 +105,8 @@ mvn spring-boot:run
   {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "tokenType": "Bearer",
-    "message": "Inicio de sesión exitoso"
+    "message": "Inicio de sesión exitoso",
+    "role": "USER"
   }
   ```
 
@@ -159,6 +166,7 @@ src/main/java/duoc/fs3/ms_auth/
 |-- model/
 |   |-- User.java                   # Entidad de usuario
 |   |-- UserPublic.java             # DTO público de usuario
+|   |-- UserRole.java               # Enum de roles (USER, ADMIN)
 |-- repository/
 |   |-- UserRepository.java         # Repositorio JPA
 |-- security/
@@ -188,6 +196,26 @@ El microservicio sigue una arquitectura limpia con separación clara de responsa
 - **Mantenibilidad**: Lógica centralizada facilita cambios futuros
 - **Testing**: Más fácil de probar componentes de forma aislada
 - **Seguridad**: Configuración centralizada de políticas de seguridad
+
+## Gestión de Roles
+
+### Roles Disponibles
+- **USER**: Rol por defecto para todos los usuarios registrados
+- **ADMIN**: Rol con acceso a endpoints de administración
+
+### Asignación de Roles
+- Los usuarios nuevos se registran automáticamente con rol USER
+- Para asignar rol ADMIN a un usuario, ejecuta el siguiente SQL en la base de datos:
+  ```sql
+  UPDATE users SET role = 'ADMIN' WHERE username = 'nombre_usuario';
+  ```
+- La gestión de roles se realiza a nivel de base de datos (no hay endpoints API para esta función)
+
+### Acceso por Rol
+- Usuarios con rol USER pueden acceder a endpoints de autenticación y recursos públicos
+- Usuarios con rol ADMIN tienen acceso adicional a endpoints bajo `/api/admin/**`
+- Los tokens JWT incluyen el rol del usuario y son validados en cada solicitud
+- El response de login incluye el campo `role` para que el frontend pueda determinar el acceso
 
 ## Desarrollo
 

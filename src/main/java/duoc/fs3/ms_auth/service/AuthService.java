@@ -7,6 +7,7 @@ import duoc.fs3.ms_auth.dto.response.RegisterResponse;
 import duoc.fs3.ms_auth.exception.InvalidCredentialsException;
 import duoc.fs3.ms_auth.exception.UserAlreadyExistsException;
 import duoc.fs3.ms_auth.model.User;
+import duoc.fs3.ms_auth.model.UserRole;
 import duoc.fs3.ms_auth.repository.UserRepository;
 import duoc.fs3.ms_auth.security.JwtService;
 import org.slf4j.Logger;
@@ -91,6 +92,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .enabled(true)
+                .role(UserRole.USER)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -105,7 +107,7 @@ public class AuthService {
      * Inicia sesión de un usuario y genera un token JWT.
      * 
      * @param request Credenciales de inicio de sesión
-     * @return Respuesta con token JWT y mensaje de estado
+     * @return Respuesta con token JWT, mensaje de estado y rol del usuario
      * @throws InvalidCredentialsException Si las credenciales son inválidas
      */
     public LoginResponse loginUser(LoginRequest request) {
@@ -120,8 +122,16 @@ public class AuthService {
 
             String token = jwtService.generateToken(request.getUsernameOrEmail());
             
-            logger.info("Login exitoso para usuario: {}", request.getUsernameOrEmail());
-            return new LoginResponse(token, messageService);
+            // Obtener el usuario para incluir su rol en la respuesta
+            User user = userRepository.findByUsernameOrEmail(
+                    request.getUsernameOrEmail(), 
+                    request.getUsernameOrEmail())
+                    .orElseThrow(() -> new InvalidCredentialsException(
+                            messageService.getMessage("error.credentials.invalid")));
+            
+            logger.info("Login exitoso para usuario: {} con rol: {}", 
+                    request.getUsernameOrEmail(), user.getRole());
+            return new LoginResponse(token, messageService, user.getRole());
 
         } catch (AuthenticationException e) {
             logger.warn("Login fallido para usuario: {} - {}", request.getUsernameOrEmail(), e.getMessage());
