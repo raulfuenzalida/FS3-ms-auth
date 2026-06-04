@@ -22,6 +22,7 @@ Microservicio de autenticación de usuarios desarrollado con Spring Boot 3.5.13,
 - **Spring Security** para autenticación y autorización
 - **Spring Data JPA** para acceso a datos
 - **MySQL** como base de datos
+- **H2 Database** para pruebas unitarias
 - **JWT (JSON Web Tokens)** para gestión de sesiones
 - **SpringDoc OpenAPI** para documentación de API
 - **JUnit 5** para pruebas unitarias
@@ -110,6 +111,60 @@ mvn spring-boot:run
   }
   ```
 
+### Administración
+
+Los siguientes endpoints requieren autenticación JWT y rol ADMIN. Incluye el header `Authorization: Bearer <token>` en todas las solicitudes.
+
+#### Listar Usuarios
+- **GET** `/api/admin/users`
+- **Headers**: `Authorization: Bearer <token>`
+- **Response**:
+  ```json
+  {
+    "users": [
+      {
+        "id": 1,
+        "username": "testuser",
+        "email": "test@example.com",
+        "role": "USER",
+        "enabled": true,
+        "createdAt": "2026-01-01T00:00:00",
+        "updatedAt": "2026-01-01T00:00:00"
+      }
+    ],
+    "total": 1
+  }
+  ```
+
+#### Actualizar Usuario
+- **PUT** `/api/admin/users/{id}`
+- **Headers**: `Authorization: Bearer <token>`
+- **Body**:
+  ```json
+  {
+    "username": "updateduser",
+    "email": "updated@example.com",
+    "role": "ADMIN"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "id": 1,
+    "username": "updateduser",
+    "email": "updated@example.com",
+    "role": "ADMIN",
+    "enabled": true,
+    "createdAt": "2026-01-01T00:00:00",
+    "updatedAt": "2026-01-01T12:00:00"
+  }
+  ```
+
+#### Eliminar Usuario
+- **DELETE** `/api/admin/users/{id}`
+- **Headers**: `Authorization: Bearer <token>`
+- **Response**: 200 OK (sin cuerpo)
+
 ## Documentación de la API
 
 Una vez que la aplicación esté en ejecución, puedes acceder a:
@@ -148,6 +203,20 @@ Configuración principal de la aplicación incluyendo conexión a base de datos 
 ### configuration.properties
 Propiedades externas que pueden ser modificadas sin recompilar la aplicación.
 
+### messages.properties
+Archivo de mensajes de validación y errores para internacionalización. Contiene mensajes personalizados para:
+- Validación de contraseñas (longitud, mayúsculas, minúsculas, números, caracteres especiales)
+- Validación de username y email
+- Mensajes de éxito y error generales
+- Mensajes específicos de autenticación
+
+### Configuración CORS
+La aplicación tiene CORS configurado para permitir solicitudes desde los siguientes orígenes:
+- `http://localhost:3000`
+- `http://localhost:4200`
+- `http://localhost:8081`
+- `http://localhost:8084`
+
 ## Estructura del Proyecto
 
 ```
@@ -158,11 +227,24 @@ src/main/java/duoc/fs3/ms_auth/
 |   |-- PasswordSecurityProperties.java # Propiedades de contraseña
 |   |-- SecurityBeansConfig.java   # Beans de seguridad
 |   |-- OpenApiConfig.java          # Configuración Swagger/OpenAPI
+|   |-- MessageSourceConfig.java    # Configuración de mensajes internacionalizados
+|   |-- WebConfig.java              # Configuración web adicional
 |-- controller/
 |   |-- AuthController.java         # Endpoints de autenticación (capa de presentación)
+|   |-- AdminController.java        # Endpoints de administración (solo ADMIN)
 |-- dto/                            # Data Transfer Objects
 |   |-- request/                    # DTOs de entrada
+|   |   |-- LoginRequest.java
+|   |   |-- RegisterRequest.java
+|   |   |-- UpdateUserRequest.java  # DTO para actualizar usuarios
 |   |-- response/                   # DTOs de salida
+|   |   |-- LoginResponse.java
+|   |   |-- RegisterResponse.java
+|   |   |-- UserResponse.java       # DTO de respuesta de usuario
+|   |   |-- UserListResponse.java    # DTO para lista de usuarios
+|-- exception/                      # Excepciones personalizadas
+|   |-- InvalidCredentialsException.java
+|   |-- UserAlreadyExistsException.java
 |-- model/
 |   |-- User.java                   # Entidad de usuario
 |   |-- UserPublic.java             # DTO público de usuario
@@ -175,10 +257,12 @@ src/main/java/duoc/fs3/ms_auth/
 |-- service/
 |   |-- AuthService.java            # Servicio de autenticación (lógica de negocio)
 |   |-- CustomUserDetailsService.java # Servicio de detalles de usuario
+|   |-- MessageService.java         # Servicio para manejo de mensajes
 |-- validation/                     # Validadores personalizados
 |   |-- PasswordValidator.java      # Validador de contraseñas
 |   |-- PasswordMatches.java        # Anotación de validación
 |   |-- PasswordMatchesValidator.java # Validador de coincidencias
+|   |-- ValidPassword.java          # Validador de contraseña adicional
 ```
 
 ## Arquitectura del Microservicio
@@ -187,9 +271,10 @@ src/main/java/duoc/fs3/ms_auth/
 El microservicio sigue una arquitectura limpia con separación clara de responsabilidades:
 
 - **Controller**: Manejo de solicitudes HTTP y respuestas
-- **Service**: Lógica de negocio centralizada en `AuthService`
+- **Service**: Lógica de negocio centralizada en `AuthService` y `MessageService`
 - **Repository**: Acceso a datos con Spring Data JPA
 - **Security**: Configuración de seguridad y gestión JWT
+- **Exception**: Manejo de excepciones personalizadas (`InvalidCredentialsException`, `UserAlreadyExistsException`) para mejor control de errores
 
 ### Ventajas de la Arquitectura
 - **Escalabilidad**: Clave JWT fija para Docker y entornos en la nube
@@ -205,11 +290,13 @@ El microservicio sigue una arquitectura limpia con separación clara de responsa
 
 ### Asignación de Roles
 - Los usuarios nuevos se registran automáticamente con rol USER
-- Para asignar rol ADMIN a un usuario, ejecuta el siguiente SQL en la base de datos:
-  ```sql
-  UPDATE users SET role = 'ADMIN' WHERE username = 'nombre_usuario';
-  ```
-- La gestión de roles se realiza a nivel de base de datos (no hay endpoints API para esta función)
+- Para asignar rol ADMIN a un usuario, puedes usar:
+  1. **Directamente en la base de datos**:
+     ```sql
+     UPDATE users SET role = 'ADMIN' WHERE username = 'nombre_usuario';
+     ```
+  2. **Mediante el endpoint API** (requiere autenticación ADMIN):
+     - **PUT** `/api/admin/users/{id}` con el campo `"role": "ADMIN"` en el body
 
 ### Acceso por Rol
 - Usuarios con rol USER pueden acceder a endpoints de autenticación y recursos públicos
