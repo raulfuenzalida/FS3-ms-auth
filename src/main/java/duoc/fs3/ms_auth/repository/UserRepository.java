@@ -3,6 +3,7 @@ package duoc.fs3.ms_auth.repository;
 import duoc.fs3.ms_auth.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -58,4 +59,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return true si existe, false en caso contrario
      */
     boolean existsByEmail(String email);
+
+    /**
+     * Obtiene todos los usuarios del sistema.
+     * 
+     * @return Lista de todos los usuarios
+     */
+    List<User> findAll();
 }

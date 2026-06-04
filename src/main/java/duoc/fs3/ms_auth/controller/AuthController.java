@@ -4,8 +4,6 @@ import duoc.fs3.ms_auth.dto.request.LoginRequest;
 import duoc.fs3.ms_auth.dto.request.RegisterRequest;
 import duoc.fs3.ms_auth.dto.response.LoginResponse;
 import duoc.fs3.ms_auth.dto.response.RegisterResponse;
-import duoc.fs3.ms_auth.exception.InvalidCredentialsException;
-import duoc.fs3.ms_auth.exception.UserAlreadyExistsException;
 import duoc.fs3.ms_auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:4200", "http://localhost:8081"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:4200", "http://localhost:8081", "http://localhost:8084"})
 @Tag(name = "Autenticación", description = "API para la gestión de autenticación de usuarios")
 public class AuthController {
 

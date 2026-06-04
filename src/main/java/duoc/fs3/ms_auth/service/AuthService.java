@@ -107,31 +107,31 @@ public class AuthService {
      * Inicia sesión de un usuario y genera un token JWT.
      * 
      * @param request Credenciales de inicio de sesión
-     * @return Respuesta con token JWT, mensaje de estado y rol del usuario
+     * @return Respuesta con token JWT y mensaje de estado (el rol está incluido en el payload del token)
      * @throws InvalidCredentialsException Si las credenciales son inválidas
      */
     public LoginResponse loginUser(LoginRequest request) {
-        
+
         logger.info("Intento de login para usuario: {}", request.getUsernameOrEmail());
-        
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsernameOrEmail(),
                             request.getPassword()));
 
-            String token = jwtService.generateToken(request.getUsernameOrEmail());
-            
-            // Obtener el usuario para incluir su rol en la respuesta
+            // Obtener el usuario para incluir su rol en el token JWT
             User user = userRepository.findByUsernameOrEmail(
-                    request.getUsernameOrEmail(), 
+                    request.getUsernameOrEmail(),
                     request.getUsernameOrEmail())
                     .orElseThrow(() -> new InvalidCredentialsException(
                             messageService.getMessage("error.credentials.invalid")));
-            
-            logger.info("Login exitoso para usuario: {} con rol: {}", 
+
+            String token = jwtService.generateToken(request.getUsernameOrEmail(), user.getRole());
+
+            logger.info("Login exitoso para usuario: {} con rol: {}",
                     request.getUsernameOrEmail(), user.getRole());
-            return new LoginResponse(token, messageService, user.getRole());
+            return new LoginResponse(token, messageService);
 
         } catch (AuthenticationException e) {
             logger.warn("Login fallido para usuario: {} - {}", request.getUsernameOrEmail(), e.getMessage());

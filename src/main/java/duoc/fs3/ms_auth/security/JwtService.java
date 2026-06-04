@@ -1,5 +1,6 @@
 package duoc.fs3.ms_auth.security;
 
+import duoc.fs3.ms_auth.model.UserRole;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,8 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Servicio para la gestión de tokens JWT.
@@ -47,6 +50,28 @@ public class JwtService {
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
                 .setHeaderParam("alg", "HS256")
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_MS))
+                .signWith(getSigningKey(), io.jsonwebtoken.SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    /**
+     * Genera un token JWT para el usuario especificado con su rol incluido en el payload.
+     * 
+     * @param username Nombre de usuario para el cual se genera el token
+     * @param role Rol del usuario que se incluirá en el payload del token
+     * @return Token JWT con validez de 1 hora, headers compatibles con JWT debugger y rol en el payload
+     */
+    public String generateToken(String username, UserRole role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role.name());
+        
+        return Jwts.builder()
+                .setHeaderParam("typ", "JWT")
+                .setHeaderParam("alg", "HS256")
+                .setClaims(claims)
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_MS))

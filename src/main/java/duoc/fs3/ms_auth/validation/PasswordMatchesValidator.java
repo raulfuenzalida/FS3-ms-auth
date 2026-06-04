@@ -1,6 +1,5 @@
 package duoc.fs3.ms_auth.validation;
 
-import duoc.fs3.ms_auth.dto.request.RegisterRequest;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.beans.BeanWrapperImpl;
