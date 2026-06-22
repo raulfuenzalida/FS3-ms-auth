@@ -14,6 +14,7 @@ Microservicio de autenticación de usuarios desarrollado con Spring Boot 3.5.13,
 - **Documentación Swagger**: API documentada automáticamente con OpenAPI 3.0
 - **Pruebas unitarias**: Cobertura de pruebas para los componentes principales
 - **Base de datos MySQL**: Configurado para desarrollo local con Laragon
+- **Docker ready**: Configurado para despliegue con Docker y docker-compose
 
 ## Tecnologías
 
@@ -27,6 +28,7 @@ Microservicio de autenticación de usuarios desarrollado con Spring Boot 3.5.13,
 - **SpringDoc OpenAPI** para documentación de API
 - **JUnit 5** para pruebas unitarias
 - **Lombok** para reducir código boilerplate
+- **Docker** para contenedorización
 
 ## Metadatos del Proyecto
 
@@ -40,9 +42,12 @@ Microservicio de autenticación de usuarios desarrollado con Spring Boot 3.5.13,
 - Java 17 o superior
 - Maven 3.8+
 - MySQL Server (configurado con Laragon para desarrollo local)
+- Docker y docker-compose (para despliegue con contenedores)
 - IDE compatible con Java (IntelliJ IDEA, Eclipse, VS Code)
 
 ## Configuración de Base de Datos
+
+### Desarrollo Local
 
 1. Crear la base de datos en MySQL:
    ```sql
@@ -55,6 +60,17 @@ Microservicio de autenticación de usuarios desarrollado con Spring Boot 3.5.13,
    ```sql
    UPDATE users SET role = 'USER' WHERE role IS NULL;
    ```
+
+### Docker / AWS EC2
+
+La aplicación ahora usa variables de entorno para la configuración de base de datos:
+
+- `DB_HOST`: IP del servidor MySQL (AWS EC2 o localhost para Docker local)
+- `DB_PORT`: Puerto MySQL (default 3306)
+- `DB_USER`: Usuario MySQL
+- `DB_PASSWORD`: Contraseña MySQL
+
+Ver sección **Despliegue con Docker** para más detalles.
 
 ## Ejecución de la Aplicación
 
@@ -75,6 +91,47 @@ mvn spring-boot:run
 1. Importar el proyecto como proyecto Maven
 2. Ejecutar la clase `MsAuthApplication.java`
 3. La aplicación estará disponible en `http://localhost:8080`
+
+### Despliegue con Docker
+
+#### Construir el JAR
+```bash
+mvn clean package -DskipTests
+```
+
+#### Construir imagen Docker
+```bash
+docker build -t fs3-ms-auth .
+```
+
+#### Ejecutar con docker-compose
+```bash
+# Copiar .env.example a .env y configurar variables
+cp .env.example .env
+# Editar .env con tus valores de DB_HOST, DB_PORT, DB_USER, DB_PASSWORD
+
+# Iniciar contenedor
+docker-compose up -d
+```
+
+#### Ejecutar contenedor directamente
+```bash
+docker run -d -p 8080:8080 \
+  -e DB_HOST=tu-db-host \
+  -e DB_PORT=3306 \
+  -e DB_USER=root \
+  -e DB_PASSWORD=tu-password \
+  --name fs3-ms-auth \
+  fs3-ms-auth
+```
+
+#### Variables de Entorno Requeridas
+- `DB_HOST`: IP del servidor MySQL (para AWS EC2 usar IP pública, para Docker local usar `host.docker.internal` o IP de host)
+- `DB_PORT`: Puerto MySQL (default 3306)
+- `DB_USER`: Usuario MySQL
+- `DB_PASSWORD`: Contraseña MySQL
+
+Ver archivo `.env.example` para template de configuración.
 
 ## Endpoints de la API
 
@@ -198,7 +255,7 @@ Las pruebas cubren:
 ## Configuración
 
 ### application.properties
-Configuración principal de la aplicación incluyendo conexión a base de datos y políticas de seguridad.
+Configuración principal de la aplicación incluyendo conexión a base de datos y políticas de seguridad. Ahora usa variables de entorno para la configuración de base de datos.
 
 ### configuration.properties
 Propiedades externas que pueden ser modificadas sin recompilar la aplicación.
