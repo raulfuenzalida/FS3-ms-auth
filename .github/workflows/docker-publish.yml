@@ -3,7 +3,7 @@ name: Publicar imagen docker
 on:
   push:
     branches:
-      - release
+      - develop
 
 jobs:
   build-and-push:
@@ -24,4 +24,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ms.auth:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ms.auth:1.0.0
